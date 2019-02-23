@@ -1,30 +1,45 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
 namespace AutoMapper
 {
-    public class ConstructorParameterMap
+    public class ConstructorParameterMap : DefaultMemberMap
     {
-        public ConstructorParameterMap(ParameterInfo parameter, MemberInfo[] sourceMembers, bool canResolve)
+        public ConstructorParameterMap(TypeMap typeMap, ParameterInfo parameter, IEnumerable<MemberInfo> sourceMembers,
+            bool canResolveValue)
         {
+            TypeMap = typeMap;
             Parameter = parameter;
-            SourceMembers = sourceMembers;
-            CanResolve = canResolve;
+            SourceMembers = sourceMembers.ToList();
+            CanResolveValue = canResolveValue;
         }
 
         public ParameterInfo Parameter { get; }
 
-        public MemberInfo[] SourceMembers { get; }
+        public override TypeMap TypeMap { get; }
 
-        public bool CanResolve { get; set; }
+        public override Type SourceType =>
+            CustomMapExpression?.Type
+            ?? CustomMapFunction?.Type
+            ?? (Parameter.IsOptional 
+                ? Parameter.ParameterType 
+                : SourceMembers.Last().GetMemberType());
 
-        public bool DefaultValue { get; set; }
+        public override Type DestinationType => Parameter.ParameterType;
 
-        public LambdaExpression CustomExpression { get; set; }
+        public override IEnumerable<MemberInfo> SourceMembers { get; }
+        public override string DestinationName => Parameter.Member.DeclaringType + "." + Parameter.Member + ".parameter " + Parameter.Name;
 
-        public LambdaExpression CustomValueResolver { get; set; }
+        public bool HasDefaultValue => Parameter.IsOptional;
 
-        public Type DestinationType => Parameter.ParameterType;
+        public override LambdaExpression CustomMapExpression { get; set; }
+        public override LambdaExpression CustomMapFunction { get; set; }
+
+        public override bool CanResolveValue { get; set; }
+
+        public override bool Inline { get; set; }
     }
 }

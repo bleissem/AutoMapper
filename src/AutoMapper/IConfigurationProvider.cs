@@ -139,7 +139,7 @@ namespace AutoMapper
         /// <returns>The mapper instance</returns>
         IMapper CreateMapper(Func<Type, object> serviceCtor);
 
-        Func<TSource, TDestination, ResolutionContext, TDestination> GetMapperFunc<TSource, TDestination>(TypePair types, PropertyMap propertyMap = null);
+        Func<TSource, TDestination, ResolutionContext, TDestination> GetMapperFunc<TSource, TDestination>(TypePair types, IMemberMap memberMap = null);
         Func<TSource, TDestination, ResolutionContext, TDestination> GetMapperFunc<TSource, TDestination>(MapRequest mapRequest);
 
         /// <summary>
@@ -159,7 +159,7 @@ namespace AutoMapper
         /// <summary>
         /// Builds the execution plan used to map the source to destination.
         /// Useful to understand what exactly is happening during mapping.
-        /// See <a href="http://automapper.readthedocs.io/en/latest/Understanding-your-mapping.html">the wiki</a> for details.
+        /// See <a href="https://automapper.readthedocs.io/en/latest/Understanding-your-mapping.html">the wiki</a> for details.
         /// </summary>
         /// <param name="sourceType">the runtime type of the source object</param>
         /// <param name="destinationType">the runtime type of the destination object</param>
@@ -169,7 +169,7 @@ namespace AutoMapper
         /// <summary>
         /// Builds the execution plan used to map the source to destination.
         /// Useful to understand what exactly is happening during mapping.
-        /// See <a href="http://automapper.readthedocs.io/en/latest/Understanding-your-mapping.html">the wiki</a> for details.
+        /// See <a href="https://automapper.readthedocs.io/en/latest/Understanding-your-mapping.html">the wiki</a> for details.
         /// </summary>
         /// <param name="mapRequest">The source/destination map request</param>
         /// <returns>the execution plan</returns>

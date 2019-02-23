@@ -33,7 +33,7 @@ namespace AutoMapper.UnitTests
         {
             cfg.CreateMissingTypeMaps = false;
             cfg.CreateMap<One, Two>()
-                .ForMember(d => d.Name, o => o.MapFrom(s => s))
+                .ForMember(d => d.Name, o => o.MapFrom(s => "name"))
                 .ForMember(d => d.Three, o => o.MapFrom(s => s.Three2))
                 .ReverseMap();
             cfg.CreateMap<Three, Three2>();
@@ -45,7 +45,7 @@ namespace AutoMapper.UnitTests
             new Action(() => Configuration.AssertConfigurationIsValid())
                 .ShouldThrowException<AutoMapperConfigurationException>(ex =>
                 {
-                    ex.PropertyMap.DestinationProperty.ShouldBe(typeof(Two).GetProperty("Three"));
+                    ex.PropertyMap.DestinationMember.ShouldBe(typeof(Two).GetProperty("Three"));
                     ex.Types.ShouldBe(new TypePair(typeof(One), typeof(Two)));
                 });
         }
@@ -400,7 +400,7 @@ namespace AutoMapper.UnitTests
         {
             var typeMap = ConfigProvider.FindTypeMapFor<Source, Destination>();
 
-            typeMap.GetPropertyMaps().Count().ShouldBe(1);
+            typeMap.PropertyMaps.Count().ShouldBe(1);
         }
 
         [Fact]
@@ -477,7 +477,7 @@ namespace AutoMapper.UnitTests
         {
             cfg.CreateMap<Source, Destination>(MemberList.Source)
                 .ForMember(dest => dest.Value3, opt => opt.MapFrom(src => src.Value2))
-                .ForSourceMember(src => src.Value2, opt => opt.Ignore());
+                .ForSourceMember(src => src.Value2, opt => opt.DoNotValidate());
         });
 
         [Fact]

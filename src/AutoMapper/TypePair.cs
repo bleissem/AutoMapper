@@ -13,23 +13,23 @@ namespace AutoMapper
         public TypePair RequestedTypes { get; }
         public TypePair RuntimeTypes { get; }
         public ITypeMapConfiguration InlineConfig { get; }
-        public PropertyMap PropertyMap { get; }
+        public IMemberMap MemberMap { get; }
 
-        public MapRequest(TypePair requestedTypes, TypePair runtimeTypes, PropertyMap propertyMap = null) 
-            : this(requestedTypes, runtimeTypes, new MapperConfiguration.DefaultTypeMapConfig(requestedTypes), propertyMap)
+        public MapRequest(TypePair requestedTypes, TypePair runtimeTypes, IMemberMap memberMap = null) 
+            : this(requestedTypes, runtimeTypes, new MapperConfiguration.DefaultTypeMapConfig(requestedTypes), memberMap)
         {
         }
 
-        public MapRequest(TypePair requestedTypes, TypePair runtimeTypes, ITypeMapConfiguration inlineConfig, PropertyMap propertyMap = null)
+        public MapRequest(TypePair requestedTypes, TypePair runtimeTypes, ITypeMapConfiguration inlineConfig, IMemberMap memberMap = null)
         {
             RequestedTypes = requestedTypes;
             RuntimeTypes = runtimeTypes;
             InlineConfig = inlineConfig;
-            PropertyMap = propertyMap;
+            MemberMap = memberMap;
         }
 
         public bool Equals(MapRequest other) => 
-            RequestedTypes.Equals(other.RequestedTypes) && RuntimeTypes.Equals(other.RuntimeTypes) && Equals(PropertyMap, other.PropertyMap);
+            RequestedTypes.Equals(other.RequestedTypes) && RuntimeTypes.Equals(other.RuntimeTypes) && Equals(MemberMap, other.MemberMap);
 
         public override bool Equals(object obj)
         {
@@ -40,9 +40,9 @@ namespace AutoMapper
         public override int GetHashCode()
         {
             var hashCode = HashCodeCombiner.Combine(RequestedTypes, RuntimeTypes);
-            if(PropertyMap != null)
+            if(MemberMap != null)
             {
-                hashCode = HashCodeCombiner.Combine(hashCode, PropertyMap.GetHashCode());
+                hashCode = HashCodeCombiner.Combine(hashCode, MemberMap.GetHashCode());
             }
             return hashCode;
         }
@@ -96,10 +96,13 @@ namespace AutoMapper
 
         public override int GetHashCode() => HashCodeCombiner.Combine(SourceType, DestinationType);
 
+        public bool IsGeneric => SourceType.IsGenericType || DestinationType.IsGenericType;
+
+        public bool IsGenericTypeDefinition => SourceType.IsGenericTypeDefinition || DestinationType.IsGenericTypeDefinition;
+
         public TypePair? GetOpenGenericTypePair()
         {
-            var isGeneric = SourceType.IsGenericType() || DestinationType.IsGenericType();
-            if(!isGeneric)
+            if(!IsGeneric)
             {
                 return null;
             }

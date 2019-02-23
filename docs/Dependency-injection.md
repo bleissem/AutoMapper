@@ -19,15 +19,39 @@ var mapper = new Mapper(Mapper.Configuration, childContainer.GetInstance);
 var dest = mapper.Map<Source, Destination>(new Source { Value = 15 });
 ```
 
-#### Gotchas
+### Queryable Extensions
 
-Using DI is effectively mutually exclusive with using the IQueryable.ProjectTo extension method.  Use ``` IEnumerable.Select(_mapper.Map<DestinationType>).ToList() ``` instead.
+Starting with 8.0 you can use IMapper.ProjectTo. For older versions you need to pass the configuration to the extension method ``` IQueryable.ProjectTo<T>(IConfigurationProvider) ```.
 
-#### ASP.NET Core
+Note that IQueryable.ProjectTo is [more limited](Queryable-Extensions.html#supported-mapping-options) than IMapper.Map, as only what is allowed by the underlying LINQ provider is supported. That means you cannot use DI with value resolvers and converters as you can with Map.
 
-There is a [NuGet package](https://www.nuget.org/packages/AutoMapper.Extensions.Microsoft.DependencyInjection/) to be used with the default injection mechanism described [here](https://lostechies.com/jimmybogard/2016/07/20/integrating-automapper-with-asp-net-core-di/).
+## Examples
 
-#### Ninject
+### ASP.NET Core
+
+There is a [NuGet package](https://www.nuget.org/packages/AutoMapper.Extensions.Microsoft.DependencyInjection/) to be used with the default injection mechanism described [here](https://github.com/AutoMapper/AutoMapper.Extensions.Microsoft.DependencyInjection/blob/master/README.md) and used in [this project](https://github.com/jbogard/ContosoUniversityCore/blob/master/src/ContosoUniversityCore/Startup.cs).
+
+Once the nuget package is downloaded, simply add AutoMapper to your IServiceCollection in your startup.cs class:
+```c#
+services.AddAutoMapper(assembly1, assembly2 /*, ...*/);
+```
+or marker types:
+```c#
+services.AddAutoMapper(type1, type2 /*, ...*/);
+```
+Now you can inject AutoMapper at runtime into your services/controllers:
+```c#
+public class EmployeesController {
+	private readonly IMapper _mapper;
+
+	public EmployeesController(IMapper mapper)
+		=> _mapper = mapper;
+
+	// use _mapper.Map to map
+}
+```
+
+### Ninject
 
 For those using Ninject here is an example of a Ninject module for AutoMapper
 
@@ -60,7 +84,7 @@ public class AutoMapperModule : NinjectModule
 }
 ```
 
-#### Simple Injector
+### Simple Injector
 
 The workflow is as follows:
 
@@ -137,5 +161,36 @@ public class PropertyThatDependsOnIocValueResolver : IValueResolver<MySourceType
     {
         return _service.MyMethod(source);
     }
+}
+```
+
+### Castle Windsor
+
+For those using Castle Windsor here is an example of an installer for AutoMapper
+
+```c#
+public class AutoMapperInstaller : IWindsorInstaller
+{
+    public void Install(IWindsorContainer container, IConfigurationStore store)
+        {
+            // Register all mapper profiles
+            container.Register(
+                Classes.FromAssemblyInThisApplication(GetType().Assembly)
+                .BasedOn<Profile>().WithServiceBase());
+                
+            // Register IConfigurationProvider with all registered profiles
+            container.Register(Component.For<IConfigurationProvider>().UsingFactoryMethod(kernel =>
+            {
+                return new MapperConfiguration(configuration =>
+                {
+                    kernel.ResolveAll<Profile>().ToList().ForEach(configuration.AddProfile);
+                });
+            }).LifestyleSingleton());
+            
+            // Register IMapper with registered IConfigurationProvider
+            container.Register(
+                Component.For<IMapper>().UsingFactoryMethod(kernel =>
+                    new Mapper(kernel.Resolve<IConfigurationProvider>(), kernel.Resolve)));
+        }
 }
 ```

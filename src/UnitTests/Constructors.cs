@@ -504,6 +504,7 @@ namespace AutoMapper.UnitTests.Constructors
         [Fact]
         public void Should_map_from_the_property()
         {
+            var typeMap = Configuration.FindTypeMapFor<Person, PersonDto>();
             _destination.Name.ShouldBe("John");
         }
     }
@@ -889,6 +890,45 @@ namespace AutoMapper.UnitTests.Constructors
         {
             _destination.Foo.ShouldBe(5);
             _destination.Bar.ShouldBe("bar");
+        }
+    }
+
+    public class When_mapping_constructor_argument_fails : AutoMapperSpecBase
+    {
+        public class Source
+        {
+            public int Foo { get; set; }
+            public int Bar { get; set; }
+        }
+
+        public class Dest
+        {
+            private readonly int _foo;
+
+            public int Foo
+            {
+                get { return _foo; }
+            }
+
+            public int Bar { get; set; }
+
+            public Dest(DateTime foo)
+            {
+                _foo = foo.Day;
+            }
+        }
+
+        protected override MapperConfiguration Configuration { get; } = new MapperConfiguration(cfg =>
+        {
+            cfg.CreateMissingTypeMaps = false;
+            cfg.CreateMap<Source, Dest>();
+        });
+
+        [Fact]
+        public void Should_say_what_parameter_fails()
+        {
+            new Action(() => Mapper.Map<Source, Dest>(new Source { Foo = 5, Bar = 10 })).ShouldThrowException<AutoMapperMappingException>(ex =>
+                  ex.MemberMap.DestinationName.ShouldBe("AutoMapper.UnitTests.Constructors.When_mapping_constructor_argument_fails+Dest.Void .ctor(System.DateTime).parameter foo"));
         }
     }
 

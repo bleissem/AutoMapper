@@ -1,24 +1,30 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 
 namespace AutoMapper.Internal
 {
     public struct MemberPath : IEquatable<MemberPath>
     {
-        public MemberInfo[] Members { get; }
+        private readonly MemberInfo[] _members;
+        public IEnumerable<MemberInfo> Members => _members;
+
+        public MemberPath(Expression destinationExpression) : this(MemberVisitor.GetMemberPath(destinationExpression).Reverse())
+        {
+        }
 
         public MemberPath(IEnumerable<MemberInfo> members)
         {
-            Members = members.ToArray();
+            _members = members.ToArray();
         }
 
-        public MemberInfo Last => Members[Members.Length - 1];
+        public MemberInfo Last => _members[_members.Length - 1];
 
-        public MemberInfo First => Members[0];
+        public MemberInfo First => _members[0];
 
-        public int Length => Members.Length;
+        public int Length => _members.Length;
 
         public bool Equals(MemberPath other) => Members.SequenceEqual(other.Members);
 
@@ -37,6 +43,9 @@ namespace AutoMapper.Internal
             }
             return hashCode;
         }
+
+        public override string ToString()
+            => string.Join(".", Members.Select(mi => mi.Name));
 
         public static bool operator==(MemberPath left, MemberPath right) => left.Equals(right);
 
